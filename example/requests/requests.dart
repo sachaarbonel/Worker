@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:convert';
 
 void main() {
-  final worker = new Worker();
+  final worker = new Worker(poolSize: 4, spawnLazily: false);
   var futures = <Future>[];
   
   for (var i in ["https://swapi.co/api/people/1","https://swapi.co/api/people/2","https://swapi.co/api/people/3"]) {

@@ -1,8 +1,8 @@
 name: worker
 version: 1.0.0
-author: Diego Rocha <diego.rocha.comp@gmail.com>
+author: Sacha Arbonel <sacha.arbonel@hotmail.fr>
 description: Utility for easy concurrency with isolates
-homepage: https://github.com/Dreckr/Worker
+homepage: https://github.com/Sach97/Worker
 environment:
   sdk: '>=2.0.0-dev.67.0 <3.0.0'
 documentation: http://www.dartdocs.org/documentation/worker/0.5.0/index.html
