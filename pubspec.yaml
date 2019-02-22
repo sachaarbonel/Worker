@@ -1,11 +1,11 @@
-name: worker
-version: 1.0.0
+name: worker2
+version: 0.5.1
 author: Sacha Arbonel <sacha.arbonel@hotmail.fr>
 description: Utility for easy concurrency with isolates
 homepage: https://github.com/Sach97/Worker
 environment:
   sdk: '>=2.0.0-dev.67.0 <3.0.0'
-documentation: http://www.dartdocs.org/documentation/worker/0.5.0/index.html
+documentation: http://www.dartdocs.org/documentation/worker/0.5.1/index.html
 dependencies:
   stack_trace: '>=0.9.0 <2.0.0'
 dev_dependencies:
