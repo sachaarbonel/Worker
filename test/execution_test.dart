@@ -1,6 +1,6 @@
 library worker.test.execution;
 
-import 'package:worker2/worker.dart';
+import 'package:worker2/worker2.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 

@@ -1,4 +1,4 @@
-import 'package:worker2/worker.dart';
+import 'package:worker2/worker2.dart';
 import "dart:async";
 
 void main() {

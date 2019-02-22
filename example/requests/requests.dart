@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:worker2/worker.dart';
+import 'package:worker2/worker2.dart';
 import 'dart:io';
 import 'dart:convert';
 

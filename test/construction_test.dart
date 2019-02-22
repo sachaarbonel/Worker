@@ -1,7 +1,7 @@
 library worker.test.construction;
 
 import 'dart:io';
-import 'package:worker2/worker.dart';
+import 'package:worker2/worker2.dart';
 import 'package:test/test.dart';
 
 void main () {
