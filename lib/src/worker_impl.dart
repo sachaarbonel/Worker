@@ -45,7 +45,7 @@ class _WorkerImpl implements Worker {
   Stream<TaskFailedEvent> get onTaskFailed =>
       _taskFailedEventController.stream;
 
-  _WorkerImpl ({this.poolSize : 1, spawnLazily : true}) {
+  _WorkerImpl ({this.poolSize = 1, spawnLazily = true}) {
     if (this.poolSize <= 0)
       this.poolSize = 1;
 
@@ -101,7 +101,7 @@ class _WorkerImpl implements Worker {
     return isolate;
   }
 
-  Future<Worker> close ({bool afterDone: true}) {
+  Future<Worker> close ({bool afterDone= true}) {
     if (this._isClosed)
           return new Future.value(this);
 
@@ -265,7 +265,7 @@ class _WorkerIsolateImpl implements WorkerIsolate {
     this._taskFailedEventController.close();
   }
 
-  Future<WorkerIsolate> close ({bool afterDone: true}) {
+  Future<WorkerIsolate> close ({bool afterDone= true}) {
     if (this._isClosed)
       return new Future.value(this);
 

@@ -1,6 +1,6 @@
 part of worker.core;
 
-void _workerMain (sendPort) {
+void _workerMain(sendPort) {
   ReceivePort receivePort;
   if (receivePort == null) {
     receivePort = new ReceivePort();
@@ -12,24 +12,22 @@ void _workerMain (sendPort) {
   }
 
   receivePort.listen((message) {
-    if (!_acceptMessage(sendPort, receivePort, message))
-        return;
+    if (!_acceptMessage(sendPort, receivePort, message)) return;
 
     var result;
 
     try {
       if (message is Task) {
-          result = message.execute();
+        result = message.execute();
 
-          if (result is Future) {
-            result.then(
-                (futureResult) =>
-                    sendPort.send(new _WorkerResult(futureResult)),
-                onError: (exception, stackTrace) =>
-                    sendException(sendPort, exception, stackTrace));
-          } else {
-            sendPort.send(new _WorkerResult(result));
-          }
+        if (result is Future) {
+          result.then(
+              (futureResult) => sendPort.send(new _WorkerResult(futureResult)),
+              onError: (exception, stackTrace) =>
+                  sendException(sendPort, exception, stackTrace));
+        } else {
+          sendPort.send(new _WorkerResult(result));
+        }
       } else
         throw new Exception('Message is not a task');
     } catch (exception, stackTrace) {
@@ -38,7 +36,7 @@ void _workerMain (sendPort) {
   });
 }
 
-bool _acceptMessage (SendPort sendPort, ReceivePort receivePort, message) {
+bool _acceptMessage(SendPort sendPort, ReceivePort receivePort, message) {
   if (message is _WorkerSignal && message.id == _CLOSE_SIGNAL.id) {
     sendPort.send(_CLOSE_SIGNAL);
     receivePort.close();
@@ -48,7 +46,7 @@ bool _acceptMessage (SendPort sendPort, ReceivePort receivePort, message) {
   return true;
 }
 
-void sendException (SendPort sendPort, exception, StackTrace stackTrace) {
+void sendException(SendPort sendPort, exception, StackTrace stackTrace) {
   if (exception is Error) {
     exception = Error.safeToString(exception);
   }
@@ -58,6 +56,5 @@ void sendException (SendPort sendPort, exception, StackTrace stackTrace) {
     stackTraceFrames = new Trace.from(stackTrace).frames;
   }
 
-  sendPort.send(
-      new _WorkerException(exception, stackTraceFrames));
+  sendPort.send(new _WorkerException(exception, stackTraceFrames));
 }

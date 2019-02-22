@@ -48,7 +48,7 @@ abstract class Worker {
   /// Stream of task failed events.
   Stream<TaskFailedEvent> get onTaskFailed;
 
-  factory Worker ({int poolSize, bool spawnLazily : true}) {
+  factory Worker ({int poolSize, bool spawnLazily = true}) {
     if (poolSize == null) {
       poolSize = Platform.numberOfProcessors;
     }

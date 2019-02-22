@@ -1,4 +1,6 @@
 # Changelog
+## 1.0.1
+  Made changes to upgrade the pub score 
 
 ## 1.0.0
   Upgraded package Worker to be Dart2 compatible ([#14](https://github.com/Dreckr/Worker/issues/14))
