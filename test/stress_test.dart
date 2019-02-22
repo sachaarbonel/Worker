@@ -2,7 +2,7 @@ library worker.test.stress;
 
 import 'dart:async';
 import 'dart:io';
-import 'package:worker/worker.dart';
+import 'package:worker2/worker.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 

@@ -1,7 +1,7 @@
 library worker.test.common;
 
 import 'dart:async';
-import 'package:worker/worker.dart';
+import 'package:worker2/worker.dart';
 
 
 class AddTask implements Task<int> {
