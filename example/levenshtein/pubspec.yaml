@@ -1,5 +1,0 @@
-name: WorkerLevenshtein
-description: An example of how to use Worker to compare your Strings using Levenshtein.
-dependencies:
-  levenshtein: any
-  worker: any
