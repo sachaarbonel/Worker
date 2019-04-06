@@ -1,12 +1,13 @@
+import 'package:async/async.dart';
 import 'package:worker2/worker2.dart';
 import "dart:async";
 
 void main() {
   final worker = new Worker();
   var futures = <Future>[];
-  
+  CancelableCompleter token = CancelableCompleter();
   for (var i in [10, 20, 30, 40, 31, 21]) {
-    futures.add(worker.handle(new FibTask(i)));
+    futures.add(worker.handle(new FibTask(i),token));
   }
 
   Future.wait(futures).then((r) {

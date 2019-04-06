@@ -26,6 +26,13 @@ class TaskScheduledEvent extends WorkerEvent {
       super("taskScheduled", isolate);
 }
 
+class TaskCanceledEvent extends WorkerEvent {
+  final Task task;
+
+  TaskCanceledEvent(WorkerIsolate isolate, this.task) :
+      super("taskCanceled", isolate);
+}
+
 class TaskCompletedEvent extends WorkerEvent {
   final Task task;
   final result;
