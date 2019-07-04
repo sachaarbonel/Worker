@@ -23,7 +23,7 @@ Future<String> getUrl(String url) async {
   StringBuffer contents = new StringBuffer();
   var request = await HttpClient().getUrl(Uri.parse(url));
   var response = await request.close(); 
- response.transform(utf8.decoder).listen((String data) {
+  response.cast<List<int>>().transform(utf8.decoder).listen((String data) {
     contents.write(data);
   }, onDone: () => completer.complete(contents.toString()));
   return await completer.future;
