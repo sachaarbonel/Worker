@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:async/async.dart';
 import 'package:worker2/worker2.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -6,9 +7,9 @@ import 'dart:convert';
 void main() {
   final worker = new Worker(poolSize: 4, spawnLazily: false);
   var futures = <Future>[];
-  
+  CancelableCompleter token = CancelableCompleter();
   for (var url in ["https://swapi.co/api/people/1","https://swapi.co/api/people/2","https://swapi.co/api/people/3"]) {
-    futures.add(worker.handle(AsyncHttpGet(url)));
+    futures.add(worker.handle(AsyncHttpGet(url), token));
   }
 
   Future.wait(futures).then((r) {

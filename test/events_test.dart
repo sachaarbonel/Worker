@@ -1,5 +1,6 @@
 library worker.test.events;
 
+import 'package:async/async.dart';
 import 'package:worker2/worker2.dart';
 import 'package:test/test.dart';
 import 'common.dart';
@@ -34,14 +35,14 @@ void main () {
     test('of task scheduled', () {
       worker = new Worker(poolSize: 1, spawnLazily: false);
       task = new SimpleTask();
-
+      CancelableCompleter token = CancelableCompleter();
       worker.onTaskScheduled.listen(expectAsync1((taskScheduledEvent) {
         expect(taskScheduledEvent, TypeMatcher<TaskScheduledEvent>());
         expect(taskScheduledEvent.task, task);
         expect(taskScheduledEvent.isolate, TypeMatcher<WorkerIsolate>());
       }));
 
-      worker.handle(task);
+      worker.handle(task,token);
 
       worker.close();
     });
@@ -49,7 +50,7 @@ void main () {
     test('of task completed', () {
       worker = new Worker(poolSize: 1, spawnLazily: false);
       task = new SimpleTask();
-
+      CancelableCompleter token = CancelableCompleter();
       worker.onTaskCompleted.listen(expectAsync1((taskCompletedEvent) {
         expect(taskCompletedEvent, TypeMatcher<TaskCompletedEvent>());
         expect(taskCompletedEvent.task, task);
@@ -57,7 +58,7 @@ void main () {
         expect(taskCompletedEvent.isolate, TypeMatcher<WorkerIsolate>());
       }));
 
-      worker.handle(task);
+      worker.handle(task,token);
 
       worker.close();
     });
@@ -65,7 +66,7 @@ void main () {
     test('of task failed', () {
       worker = new Worker(poolSize: 1, spawnLazily: false);
       task = new ErrorTask();
-
+      CancelableCompleter token = CancelableCompleter();
       worker.onTaskFailed.listen(expectAsync1((taskFailedEvent) {
         expect(taskFailedEvent, TypeMatcher<TaskFailedEvent>());
         expect(taskFailedEvent.task, task);
@@ -74,7 +75,7 @@ void main () {
         expect(taskFailedEvent.isolate, TypeMatcher<WorkerIsolate>());
       }));
 
-      worker.handle(task).then(
+      worker.handle(task,token).then(
           (result) {},
           onError: expectAsync2((error, stackTrace) {})
       );

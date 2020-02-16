@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:async/async.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'events.dart';
 
@@ -57,7 +58,7 @@ abstract class Worker {
   }
 
   /// Returns a [Future] with the result of the execution of the [Task].
-  Future handle (Task task);
+  Future handle (Task task,TaskToken token); //TODO: make it optional
 
   /// Closes the [ReceivePort] of the isolates.
   /// Waits until all scheduled tasks have completed if [afterDone] is `true`.
@@ -89,12 +90,15 @@ abstract class WorkerIsolate {
   /// Stream of task completed events.
   Stream<TaskCompletedEvent> get onTaskCompleted;
 
+  /// Stream of task completed events.
+  Stream<TaskCanceledEvent> get onTaskCanceled;
+
   /// Stream of task failed events.
   Stream<TaskFailedEvent> get onTaskFailed;
 
   factory WorkerIsolate () => new _WorkerIsolateImpl();
 
-  Future performTask (Task task);
+  Future performTask (Task task, TaskToken token); //TODO: make it optional
 
   /// Closes the [ReceivePort] of the isolate.
   /// Waits until all scheduled tasks have completed if [afterDone] is `true`.
@@ -118,5 +122,11 @@ class TaskCancelledException implements Exception {
 abstract class Task<T> {
 
   T execute ();
+
+}
+
+abstract class TaskToken<T> extends CancelableCompleter {
+
+  T cancel ();
 
 }

@@ -30,8 +30,14 @@ class _WorkerImpl implements Worker {
   StreamController<TaskScheduledEvent> _taskScheduledEventController =
       new StreamController<TaskScheduledEvent>.broadcast();
 
+  StreamController<TaskCanceledEvent> _taskCanceledEventController =
+      new StreamController<TaskCanceledEvent>.broadcast();
+
   Stream<TaskScheduledEvent> get onTaskScheduled =>
       _taskScheduledEventController.stream;
+
+  Stream<TaskCanceledEvent> get onTaskCanceled =>
+      _taskCanceledEventController.stream;
 
   StreamController<TaskCompletedEvent> _taskCompletedEventController =
       new StreamController<TaskCompletedEvent>.broadcast();
@@ -42,12 +48,10 @@ class _WorkerImpl implements Worker {
   StreamController<TaskFailedEvent> _taskFailedEventController =
       new StreamController<TaskFailedEvent>.broadcast();
 
-  Stream<TaskFailedEvent> get onTaskFailed =>
-      _taskFailedEventController.stream;
+  Stream<TaskFailedEvent> get onTaskFailed => _taskFailedEventController.stream;
 
-  _WorkerImpl ({this.poolSize = 1, spawnLazily = true}) {
-    if (this.poolSize <= 0)
-      this.poolSize = 1;
+  _WorkerImpl({this.poolSize = 1, spawnLazily = true}) {
+    if (this.poolSize <= 0) this.poolSize = 1;
 
     if (!spawnLazily) {
       for (var i = 0; i < this.poolSize; i++) {
@@ -56,54 +60,48 @@ class _WorkerImpl implements Worker {
     }
   }
 
-  Future handle (Task task) {
-    if (this.isClosed)
-      throw new Exception('Worker is closed!');
+  Future handle(Task task,CancelableCompleter token) {
+    if (this.isClosed) throw new Exception('Worker is closed!');
 
     WorkerIsolate isolate = this._selectIsolate();
 
     if (isolate != null)
-      return isolate.performTask(task);
+      return isolate.performTask(task,token);
     else
       throw new Exception("No isolate available");
   }
 
-  WorkerIsolate _selectIsolate () {
-    return this.isolates.firstWhere((islt) => islt.isFree,
-        orElse:
-          () {
-            var isolate;
+  WorkerIsolate _selectIsolate() {
+    return this.isolates.firstWhere((islt) => islt.isFree, orElse: () {
+      var isolate;
 
-            if (this.isolates.length < this.poolSize) {
-              isolate = this._spawnIsolate();
-            } else {
-              isolate = this.isolates.firstWhere(
-                  (isolate) => isolate.isFree,
-                  orElse: () => this.isolates.reduce(
-                      (a, b) =>
-                          a.scheduledTasks.length <= b.scheduledTasks.length ?
-                              a : b));
-            }
+      if (this.isolates.length < this.poolSize) {
+        isolate = this._spawnIsolate();
+      } else {
+        isolate = this.isolates.firstWhere((isolate) => isolate.isFree,
+            orElse: () => this.isolates.reduce((a, b) =>
+                a.scheduledTasks.length <= b.scheduledTasks.length ? a : b));
+      }
 
-            return isolate;
-        });
+      return isolate;
+    });
   }
 
-  WorkerIsolate _spawnIsolate () {
+  WorkerIsolate _spawnIsolate() {
     var isolate = new _WorkerIsolateImpl();
     mergeStream(_isolateSpawnedEventController, isolate.onSpawned);
     mergeStream(_isolateClosedEventController, isolate.onClosed);
+    mergeStream(_taskCanceledEventController, isolate.onTaskCanceled);
     mergeStream(_taskScheduledEventController, isolate.onTaskScheduled);
     mergeStream(_taskCompletedEventController, isolate.onTaskCompleted);
     mergeStream(_taskFailedEventController, isolate.onTaskFailed);
-    this.isolates.add(isolate );
+    this.isolates.add(isolate);
 
     return isolate;
   }
 
-  Future<Worker> close ({bool afterDone= true}) {
-    if (this._isClosed)
-          return new Future.value(this);
+  Future<Worker> close({bool afterDone = true}) {
+    if (this._isClosed) return new Future.value(this);
 
     this._isClosed = true;
 
@@ -113,7 +111,6 @@ class _WorkerImpl implements Worker {
 
     return Future.wait(closeFutures).then((_) => this);
   }
-
 }
 
 class _WorkerIsolateImpl implements WorkerIsolate {
@@ -129,32 +126,36 @@ class _WorkerIsolateImpl implements WorkerIsolate {
 
   _ScheduledTask _runningScheduledTask;
 
-  Task get runningTask => _runningScheduledTask != null ?
-                            _runningScheduledTask.task : null;
+  Task get runningTask =>
+      _runningScheduledTask != null ? _runningScheduledTask.task : null;
 
-  List<Task> get scheduledTasks =>
-      _scheduledTasks.map((scheduledTask) => scheduledTask.task)
-        .toList(growable: false);
+  List<Task> get scheduledTasks => _scheduledTasks
+      .map((scheduledTask) => scheduledTask.task)
+      .toList(growable: false);
 
   bool get isFree => _scheduledTasks.isEmpty && _runningScheduledTask == null;
 
   StreamController<IsolateSpawnedEvent> _spawnEventController =
       new StreamController<IsolateSpawnedEvent>.broadcast();
 
-  Stream<IsolateSpawnedEvent> get onSpawned =>
-      _spawnEventController.stream;
+  Stream<IsolateSpawnedEvent> get onSpawned => _spawnEventController.stream;
 
   StreamController<IsolateClosedEvent> _closeEventController =
       new StreamController<IsolateClosedEvent>.broadcast();
 
-  Stream<IsolateClosedEvent> get onClosed =>
-      _closeEventController.stream;
+  Stream<IsolateClosedEvent> get onClosed => _closeEventController.stream;
 
   StreamController<TaskScheduledEvent> _taskScheduledEventController =
       new StreamController<TaskScheduledEvent>.broadcast();
 
+  StreamController<TaskCanceledEvent> _taskCanceledEventController =
+      new StreamController<TaskCanceledEvent>.broadcast();
+
   Stream<TaskScheduledEvent> get onTaskScheduled =>
       _taskScheduledEventController.stream;
+
+  Stream<TaskCanceledEvent> get onTaskCanceled =>
+      _taskCanceledEventController.stream;
 
   StreamController<TaskCompletedEvent> _taskCompletedEventController =
       new StreamController<TaskCompletedEvent>.broadcast();
@@ -165,99 +166,98 @@ class _WorkerIsolateImpl implements WorkerIsolate {
   StreamController<TaskFailedEvent> _taskFailedEventController =
       new StreamController<TaskFailedEvent>.broadcast();
 
-  Stream<TaskFailedEvent> get onTaskFailed =>
-      _taskFailedEventController.stream;
+  Stream<TaskFailedEvent> get onTaskFailed => _taskFailedEventController.stream;
 
-  Completer<WorkerIsolate> _closeCompleter;
+  CancelableCompleter<WorkerIsolate> _closeCompleter;
 
-  _WorkerIsolateImpl () {
+  _WorkerIsolateImpl() {
     this._receivePort = new ReceivePort();
 
     this._spawnIsolate();
   }
 
-  Future<WorkerIsolate> _spawnIsolate () {
-    Completer<WorkerIsolate> completer = new Completer();
-    Isolate.spawn(_workerMain, this._receivePort.sendPort).then(
-          (isolate) {
-          }, onError: (error) {
-            print(error);
-          });
+  Future<WorkerIsolate> _spawnIsolate() {
+    CancelableCompleter<WorkerIsolate> completer = new CancelableCompleter();
+    Isolate.spawn(_workerMain, this._receivePort.sendPort).then((isolate) {},
+        onError: (error) {
+      print(error);
+    });
 
-      this._receivePort.listen((message) {
-        if (message is SendPort) {
-          completer.complete(this);
-          this._spawnEventController.add(new IsolateSpawnedEvent(this));
-          this._sendPort = message;
+    this._receivePort.listen((message) {
+      if (message is SendPort) {
+        completer.complete(this);
+        this._spawnEventController.add(new IsolateSpawnedEvent(this));
+        this._sendPort = message;
 
-          this._runNextTask();
+        this._runNextTask();
 
-          return;
-        } else if (message is _WorkerException) {
-          this._taskFailedEventController.add(
-              new TaskFailedEvent(this,
-                                  this._runningScheduledTask.task,
-                                  message.exception,
-                                  message.stackTrace));
+        return;
+      } else if (message is _WorkerException) {
+        this._taskFailedEventController.add(new TaskFailedEvent(
+            this,
+            this._runningScheduledTask.task,
+            message.exception,
+            message.stackTrace));
 
-          this._runningScheduledTask.completer
+        this
+            ._runningScheduledTask
+            .completer
             .completeError(message.exception, message.stackTrace);
-        } else if (message is _WorkerSignal) {
-          if (message.id == _CLOSE_SIGNAL.id){
+      } else if (message is _WorkerSignal) {
+        switch (message) {
+          case _CLOSE_SIGNAL:
             this._closeEventController.add(new IsolateClosedEvent(this));
             this._closeStreamControllers();
             _receivePort.close();
-          }
-        } else if (message is _WorkerResult) {
-          this._taskCompletedEventController.add(
-              new TaskCompletedEvent( this,
-                                      this._runningScheduledTask.task,
-                                      message.result));
+            break;
+          //case _CANCEL_SIGNAL:
 
-          this._runningScheduledTask.completer.complete(message.result);
         }
+      } else if (message is _WorkerResult) {
+        this._taskCompletedEventController.add(new TaskCompletedEvent(
+            this, this._runningScheduledTask.task, message.result));
 
-        this._runningScheduledTask = null;
+        this._runningScheduledTask.completer.complete(message.result);
+      }
 
-        this._runNextTask();
-      },
-      onError: (exception) {
-          this._runningScheduledTask.completer.completeError(exception);
-          this._runningScheduledTask = null;
-        }
-      );
+      this._runningScheduledTask = null;
 
-      return completer.future;
+      this._runNextTask();
+    }, onError: (exception) {
+      this._runningScheduledTask.completer.completeError(exception);
+      this._runningScheduledTask = null;
+    });
+
+    return completer.operation.value;
   }
 
-  Future performTask (Task task) {
-    if (this.isClosed)
-      throw new StateError('This WorkerIsolate is closed.');
+  Future performTask(Task task, CancelableCompleter token) {
+    if (this.isClosed) throw new StateError('This WorkerIsolate is closed.');
 
-    Completer completer = new Completer();
-    this._scheduledTasks.add(new _ScheduledTask(task, completer));
+    //Completer completer = new Completer();
+    //CancelableCompleter token = CancelableCompleter();
+    this._scheduledTasks.add(new _ScheduledTask(task, token));
     this._taskScheduledEventController.add(new TaskScheduledEvent(this, task));
 
     this._runNextTask();
 
-    return completer.future;
+    return token.operation.value;
   }
 
-  void _runNextTask () {
+  void _runNextTask() {
     if (_sendPort == null ||
         _scheduledTasks.length == 0 ||
         (_runningScheduledTask != null &&
-        !_runningScheduledTask.completer.isCompleted)) {
+            !_runningScheduledTask.completer.isCompleted)) {
       return;
     }
 
     _runningScheduledTask = _scheduledTasks.removeFirst();
 
     this._sendPort.send(_runningScheduledTask.task);
-
   }
 
-  void _closeStreamControllers () {
+  void _closeStreamControllers() {
     this._spawnEventController.close();
     this._closeEventController.close();
     this._taskScheduledEventController.close();
@@ -265,12 +265,11 @@ class _WorkerIsolateImpl implements WorkerIsolate {
     this._taskFailedEventController.close();
   }
 
-  Future<WorkerIsolate> close ({bool afterDone= true}) {
-    if (this._isClosed)
-      return new Future.value(this);
+  Future<WorkerIsolate> close({bool afterDone = true}) {
+    if (this._isClosed) return new Future.value(this);
 
     this._isClosed = true;
-    this._closeCompleter = new Completer<WorkerIsolate>();
+    this._closeCompleter = new CancelableCompleter<WorkerIsolate>();
 
     if (afterDone) {
       var closeIfDone = (_) {
@@ -301,10 +300,10 @@ class _WorkerIsolateImpl implements WorkerIsolate {
       });
     }
 
-    return this._closeCompleter.future;
+    return this._closeCompleter.operation.value;
   }
 
-  void _close () {
+  void _close() {
     if (this._sendPort != null) {
       this._sendPort.send(_CLOSE_SIGNAL);
       this._sendPort = null;
@@ -317,8 +316,9 @@ class _WorkerIsolateImpl implements WorkerIsolate {
     var cancelTask = (scheduledTask) {
       var exception = new TaskCancelledException(scheduledTask.task);
       scheduledTask.completer.completeError(exception);
-            this._taskFailedEventController.add(
-                new TaskFailedEvent(this, scheduledTask.task, exception));
+      this
+          ._taskFailedEventController
+          .add(new TaskFailedEvent(this, scheduledTask.task, exception));
     };
 
     if (this._runningScheduledTask != null) {
@@ -327,33 +327,32 @@ class _WorkerIsolateImpl implements WorkerIsolate {
 
     this._scheduledTasks.forEach(cancelTask);
   }
-
 }
 
 class _ScheduledTask {
-  Completer completer;
+  CancelableCompleter completer;
   Task task;
 
-  _ScheduledTask (Task this.task, Completer this.completer);
+  _ScheduledTask(Task this.task, CancelableCompleter this.completer);
 }
-
 
 /**
  * Signals:
  *  1 - CloseIsolate
  */
 const _CLOSE_SIGNAL = const _WorkerSignal(1);
+const _CANCEL_SIGNAL = const _WorkerSignal(2);
+
 class _WorkerSignal {
   final int id;
 
-  const _WorkerSignal (this.id);
-
+  const _WorkerSignal(this.id);
 }
 
 class _WorkerResult {
   final result;
 
-  _WorkerResult (this.result);
+  _WorkerResult(this.result);
 }
 
 class _WorkerException {
@@ -367,12 +366,11 @@ class _WorkerException {
     return null;
   }
 
-  _WorkerException (this.exception, this.stackTraceFrames);
+  _WorkerException(this.exception, this.stackTraceFrames);
 }
 
-void mergeStream (EventSink sink, Stream stream) {
-  stream.listen(
-      (data) => sink.add(data),
+void mergeStream(EventSink sink, Stream stream) {
+  stream.listen((data) => sink.add(data),
       onError: (errorEvent, stackTrace) =>
           sink.addError(errorEvent, stackTrace));
 }
